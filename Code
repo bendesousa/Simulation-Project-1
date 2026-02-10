@@ -1,0 +1,135 @@
+import math
+import random
+#INITIALIZE
+#Coordianates of taxis and customers waiting
+X1=[]   #X coordinate of customers
+Y1=[]   #Y coordinate of customers
+X2=[]   #X coordinate of drivers
+Y2=[]   #Y coordinate of drivers
+
+#Indices of which taxis/customers are looking for a match
+B1=[]   #Customers
+B2=[]   #Taxis
+
+#Number of total drivers that passed from the system so far
+Q=0
+
+#indeces of taxis corresponding to each customer
+#index in the i_th place is the taxi for the i_th customer
+match=[]
+
+#Termination Time
+Termination=10
+#Current time
+TNOW=0
+
+#EventCalendar
+EC=[0,[0],0,[0],[0],[0],0]
+EC[0]=random.expovariate(30)
+EC[1][0]=Termination+2
+EC[2]=random.expovariate(3)
+EC[3][0]=Termination+2
+EC[4][0]=Termination+2
+EC[5][0]=Termination+2
+EC[6]=Termination
+#Termination+2 is being inputted when there is actually no 
+#customers (or drivers) in the system, while Termination+1 
+#is being used to show that a customer (or driver) exist in
+#the system with no match yet
+
+#Start of the Simulation
+while TNOW<Termination:
+    NextEvent=min(EC[0], min(EC[1]), EC[2], min(EC[3]), min(EC[4]), min(EC[5]), EC[6])
+    #...Add other staff here afterwards...
+    TNOW=NextEvent
+    if TNOW==EC[0]:   #customer arrives in the system
+        EC[0]=TNOW+random.expovariate(30)
+        X1.append(random.uniform(0,20))   #find coordinates of
+        Y1.append(random.uniform(0,20))   #new customer
+        B1.append(0)                      
+        if len(B2)>0:   #If there are taxis in the system
+            #Find minimum distance with closest available taxi if any
+            MinDist=30  #value bigger than 20*sqrt(2) for now
+            for i in range(len(B2)):
+                if B2[i]==1 and math.sqrt((X1[-1]-X2[i])^2+(Y1[-1]-Y2[i])^2)<MinDist:
+                    MinDist=math.sqrt((X1[-1]-X2[i])^2+(Y1[-1]-Y2[i])^2)
+            if MinDist==30:          #No available taxis, so no change in MinDist
+                B1[-1]=1             #Customer starts waiting for a match
+                EC[1].append(TNOW+random.expovariate(5)) #Time of impatience
+                match.append[0]      #No match found
+                #No valid service time yet
+                if EC[3][0]==Termination+2:
+                    #if there are no customers about to start being serviced, 
+                    #assign them to the first element
+                    EC[3][0]=Termination+1
+                    EC[4][0]=Termination+1
+                else:
+                    #otherwise to the last one
+                    EC[3].append(Termination+1) 
+                    EC[4].append(Termination+1) 
+            else:
+                #Find which taxi had the minimum distance
+                for i in range(len(B2)):
+                    if B2[i]==1 and MinDist==math.sqrt((X1[-1]-X2[i])^2+(Y1[-1]-Y2[i])^2):
+                        B1[-1]=B2[i]=0   #make taxi and customer matched
+                        match.append[i]  #match
+                        #Taxi moves towards customer
+                        if EC[3][0]==Termination+2:
+                            #if there are no customers about to start being serviced, 
+                            #assign them to the first element
+                            EC[3][0]=TNOW+random.uniform(0.8*MinDist/20, 1.2*MinDist/20)
+                            EC[4][0]=Termination+1
+                        else:
+                            #otherwise to the last one
+                            EC[3].append(TNOW+random.uniform(0.8*MinDist/20, 1.2*MinDist/20)) 
+                            EC[4].append(Termination+1)
+        else:   #No taxis in the system
+            B1[-1]=1   #Customer starts waiting for a match
+            EC[1].append(TNOW+random.expovariate(5)) #Time of impatience
+            match.append[0]  #no match found
+                #No valid service time yet
+            if EC[3][0]==Termination+2:
+                #if there are no customers about to start being serviced, 
+                #assign them to the first element
+                EC[3][0]=Termination+1
+                EC[4][0]=Termination+1
+            else:
+                #otherwise to the last one
+                EC[3].append(Termination+1) 
+                EC[4].append(Termination+1) 
+    elif TNOW==min(EC[1]):
+        for i in range(EC[1]):
+            if TNOW==min(EC[1][i]):    #customer i got impatient
+                X1.pop(i)              #remove customer from coordinates
+                Y1.pop(i)
+                B1.pop(i)              #customer stops looking for taxi
+                match.pop(i)
+                EC[1].pop(i)           #left the system
+                EC[3].pop(i)
+                EC[4].pop(i)
+    elif TNOW==EC[2]:
+        Q+=1                              #one more driver passed from the system
+        EC[2]=TNOW+random.expovariate(3)  #Next taxi arrival
+        EC[5]=TNOW+random.uniform(5,8)    #end of his shift
+        X2.append(random.uniform(0,20))   #find coordinates of
+        Y2.append(random.uniform(0,20))   #new driver
+        B2.append(0)
+        if len(B1)>0:          #If there are customers in the system
+            #Find minimum distance with closest available customer if any
+            MinDist=30  #value bigger than 20*sqrt(2) for now
+            for i in range(len(B1)):
+                if B1[i]==1 and math.sqrt((X2[-1]-X1[i])^2+(Y2[-1]-Y1[i])^2)<MinDist:
+                    MinDist=math.sqrt((X1[-1]-X2[i])^2+(Y1[-1]-Y2[i])^2)
+            if MinDist==30:          #No available customers, so no change in MinDist
+                B2[-1]=1             #Taxi starts waiting for a match
+            else:
+                #Find which customer had the minimum distance
+                for i in range(len(B1)):
+                    if B1[i]==1 and MinDist==math.sqrt((X2[-1]-X1[i])^2+(Y2[-1]-Y1[i])^2):
+                        B2[-1]=B1[i]=0   #make taxi and customer matched
+                        match[i]=Q       #match with the last taxi that came
+                        #Taxi moves towards customer
+                        EC[3][i]=TNOW+random.uniform(0.8*MinDist/20, 1.2*MinDist/20)
+        else:   #No customer in the system
+            B2[-1]=1   #Driver starts waiting for a match
+            
