@@ -14,7 +14,7 @@ B2=[]   #Taxis
 #Number of total drivers that passed from the system so far
 Q=0
 
-#indeces of taxis corresponding to each customer
+#indices of taxis corresponding to each customer
 #index in the i_th place is the taxi for the i_th customer
 match=[]
 
@@ -36,6 +36,9 @@ EC[6]=Termination
 #customers (or drivers) in the system, while Termination+1 
 #is being used to show that a customer (or driver) exist in
 #the system with no match yet
+def distance(a,b):
+    return 
+
 
 #Start of the Simulation
 while TNOW<Termination:
@@ -51,12 +54,12 @@ while TNOW<Termination:
             #Find minimum distance with closest available taxi if any
             MinDist=30  #value bigger than 20*sqrt(2) for now
             for i in range(len(B2)):
-                if B2[i]==1 and math.sqrt((X1[-1]-X2[i])^2+(Y1[-1]-Y2[i])^2)<MinDist:
-                    MinDist=math.sqrt((X1[-1]-X2[i])^2+(Y1[-1]-Y2[i])^2)
+                if B2[i]==1 and math.sqrt((X1[-1]-X2[i])**2+(Y1[-1]-Y2[i])**2)<MinDist:
+                    MinDist=math.sqrt((X1[-1]-X2[i])**2+(Y1[-1]-Y2[i])**2)
             if MinDist==30:          #No available taxis, so no change in MinDist
                 B1[-1]=1             #Customer starts waiting for a match
                 EC[1].append(TNOW+random.expovariate(5)) #Time of impatience
-                match.append[0]      #No match found
+                match.append(0)      #No match found
                 #No valid service time yet
                 if EC[3][0]==Termination+2:
                     #if there are no customers about to start being serviced, 
@@ -70,7 +73,7 @@ while TNOW<Termination:
             else:
                 #Find which taxi had the minimum distance
                 for i in range(len(B2)):
-                    if B2[i]==1 and MinDist==math.sqrt((X1[-1]-X2[i])^2+(Y1[-1]-Y2[i])^2):
+                    if B2[i]==1 and MinDist==math.sqrt((X1[-1]-X2[i])**2+(Y1[-1]-Y2[i])**2):
                         B1[-1]=B2[i]=0   #make taxi and customer matched
                         match.append[i]  #match
                         #Taxi moves towards customer
@@ -86,7 +89,7 @@ while TNOW<Termination:
         else:   #No taxis in the system
             B1[-1]=1   #Customer starts waiting for a match
             EC[1].append(TNOW+random.expovariate(5)) #Time of impatience
-            match.append[0]  #no match found
+            match.append(0)  #no match found
                 #No valid service time yet
             if EC[3][0]==Termination+2:
                 #if there are no customers about to start being serviced, 
@@ -98,7 +101,7 @@ while TNOW<Termination:
                 EC[3].append(Termination+1) 
                 EC[4].append(Termination+1) 
     elif TNOW==min(EC[1]):
-        for i in range(EC[1]):
+        for i in range(len(EC[1])):
             if TNOW==min(EC[1][i]):    #customer i got impatient
                 X1.pop(i)              #remove customer from coordinates
                 Y1.pop(i)
@@ -118,14 +121,14 @@ while TNOW<Termination:
             #Find minimum distance with closest available customer if any
             MinDist=30  #value bigger than 20*sqrt(2) for now
             for i in range(len(B1)):
-                if B1[i]==1 and math.sqrt((X2[-1]-X1[i])^2+(Y2[-1]-Y1[i])^2)<MinDist:
-                    MinDist=math.sqrt((X1[-1]-X2[i])^2+(Y1[-1]-Y2[i])^2)
+                if B1[i]==1 and math.sqrt((X2[-1]-X1[i])**2+(Y2[-1]-Y1[i])**2)<MinDist:
+                    MinDist=math.sqrt((X1[-1]-X2[i])**2+(Y1[-1]-Y2[i])**2)
             if MinDist==30:          #No available customers, so no change in MinDist
                 B2[-1]=1             #Taxi starts waiting for a match
             else:
                 #Find which customer had the minimum distance
                 for i in range(len(B1)):
-                    if B1[i]==1 and MinDist==math.sqrt((X2[-1]-X1[i])^2+(Y2[-1]-Y1[i])^2):
+                    if B1[i]==1 and MinDist==math.sqrt((X2[-1]-X1[i])**2+(Y2[-1]-Y1[i])**2):
                         B2[-1]=B1[i]=0   #make taxi and customer matched
                         match[i]=Q       #match with the last taxi that came
                         #Taxi moves towards customer
