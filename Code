@@ -102,7 +102,7 @@ while TNOW<Termination:
                 EC[4].append(Termination+1) 
     elif TNOW==min(EC[1]):
         for i in range(len(EC[1])):
-            if TNOW==min(EC[1][i]):    #customer i got impatient
+            if TNOW== EC[1][i]:    #customer i got impatient
                 X1.pop(i)              #remove customer from coordinates
                 Y1.pop(i)
                 B1.pop(i)              #customer stops looking for taxi
