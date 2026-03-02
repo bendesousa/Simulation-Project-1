@@ -255,116 +255,116 @@ print(f"Revenue per hour of simulation: £{revenue_per_hour:.2f}")
 
 
 ##########Data Driven Simulation
-# Data Preparation
-rider_df  = pd.read_excel("riders.xlsx")
-driver_df = pd.read_excel("drivers.xlsx")
+# # Data Preparation
+# rider_df  = pd.read_excel("riders.xlsx")
+# driver_df = pd.read_excel("drivers.xlsx")
 
-def parse_location(loc_string):
-    x, y = loc_string.strip("()").split(",")
-    return (float(x), float(y))
+# def parse_location(loc_string):
+#     x, y = loc_string.strip("()").split(",")
+#     return (float(x), float(y))
 
-class Rider:
-    def __init__(self, r_id, row):
-        self.id = r_id
-        self.request_time = row["request_time"]
-        self.origin = parse_location(row["pickup_location"])
-        self.destination = parse_location(row["dropoff_location"])
+# class Rider:
+#     def __init__(self, r_id, row):
+#         self.id = r_id
+#         self.request_time = row["request_time"]
+#         self.origin = parse_location(row["pickup_location"])
+#         self.destination = parse_location(row["dropoff_location"])
 
-        # Use the actual data for pickup/dropoff
-        self.pickup_time = None if pd.isna(row["pickup_time"]) else row["pickup_time"]
-        self.dropoff_time = None if pd.isna(row["dropoff_time"]) else row["dropoff_time"]
+#         # Use the actual data for pickup/dropoff
+#         self.pickup_time = None if pd.isna(row["pickup_time"]) else row["pickup_time"]
+#         self.dropoff_time = None if pd.isna(row["dropoff_time"]) else row["dropoff_time"]
 
-        # Use the status in the data
-        self.status = row["status"]
+#         # Use the status in the data
+#         self.status = row["status"]
 
-class Driver:
-    def __init__(self, d_id, row):
-        self.id = d_id
-        self.location = parse_location(row["initial_location"])
-        self.available_time = row["arrival_time"]
-        self.offline_time = row["offline_time"]
-        self.available = True
-        self.income = 0
+# class Driver:
+#     def __init__(self, d_id, row):
+#         self.id = d_id
+#         self.location = parse_location(row["initial_location"])
+#         self.available_time = row["arrival_time"]
+#         self.offline_time = row["offline_time"]
+#         self.available = True
+#         self.income = 0
 
-#Helper Functions
-def distance(a, b):
-    return math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
+# #Helper Functions
+# def distance(a, b):
+#     return math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
 
-#System State
+# #System State
 
-drivers= {}
-riders = {}
+# drivers= {}
+# riders = {}
 
-X1=[]   #X coordinate of customers
-Y1=[]   #Y coordinate of customers
-X2=[]   #X coordinate of drivers
-Y2=[]   #Y coordinate of drivers
+# X1=[]   #X coordinate of customers
+# Y1=[]   #Y coordinate of customers
+# X2=[]   #X coordinate of drivers
+# Y2=[]   #Y coordinate of drivers
 
-#Indices of which taxis/customers are looking for a match
-B1=[]   #Customers
-B2=[]   #Taxis
+# #Indices of which taxis/customers are looking for a match
+# B1=[]   #Customers
+# B2=[]   #Taxis
 
-for i, row in rider_df.iterrows():
-    if str(row["status"]).strip().lower() == "pickup-scheduled":
-        continue  # Skip riders who haven't started
-    r = Rider(i, row)
-    riders[i] = r
-    X1.append(r.origin[0])
-    Y1.append(r.origin[1])
-    B1.append(1)
+# for i, row in rider_df.iterrows():
+#     if str(row["status"]).strip().lower() == "pickup-scheduled":
+#         continue  # Skip riders who haven't started
+#     r = Rider(i, row)
+#     riders[i] = r
+#     X1.append(r.origin[0])
+#     Y1.append(r.origin[1])
+#     B1.append(1)
 
-for i, row in driver_df.iterrows():
-    d = Driver(i, row)
-    drivers[i] = d
-    X2.append(d.location[0])
-    Y2.append(d.location[1])
-    B2.append(1)
+# for i, row in driver_df.iterrows():
+#     d = Driver(i, row)
+#     drivers[i] = d
+#     X2.append(d.location[0])
+#     Y2.append(d.location[1])
+#     B2.append(1)
 
-# Map dataset status to KPIs
-served_statuses = ["dropoff-scheduled", "dropped-off"]
-abandoned_statuses = ["abandoned"]
+# # Map dataset status to KPIs
+# served_statuses = ["dropoff-scheduled", "dropped-off"]
+# abandoned_statuses = ["abandoned"]
 
-served = [r for r in riders.values() if str(r.status).strip().lower() in served_statuses]
-abandoned = [r for r in riders.values() if str(r.status).strip().lower() in abandoned_statuses]
-# Rider financials
-total_revenue = 0
-for r in served:
-    trip_dist = distance(r.origin, r.destination)
-    fare = 3 + 2 * trip_dist
-    total_revenue += fare
-avg_revenue_per_rider = total_revenue / len(served) if served else 0
+# served = [r for r in riders.values() if str(r.status).strip().lower() in served_statuses]
+# abandoned = [r for r in riders.values() if str(r.status).strip().lower() in abandoned_statuses]
+# # Rider financials
+# total_revenue = 0
+# for r in served:
+#     trip_dist = distance(r.origin, r.destination)
+#     fare = 3 + 2 * trip_dist
+#     total_revenue += fare
+# avg_revenue_per_rider = total_revenue / len(served) if served else 0
 
-# Rider waiting time
-waiting_times = [r.pickup_time - r.request_time for r in served if r.pickup_time]
-avg_waiting_time = sum(waiting_times)/len(waiting_times) if waiting_times else 0
+# # Rider waiting time
+# waiting_times = [r.pickup_time - r.request_time for r in served if r.pickup_time]
+# avg_waiting_time = sum(waiting_times)/len(waiting_times) if waiting_times else 0
 
-# Driver financials
-# Assign income only for served trips
-total_driver_income = sum((3 + 2 * distance(r.origin, r.destination)) * 0.8 for r in served)
-avg_net_income_per_driver = total_driver_income / len(drivers) if drivers else 0
+# # Driver financials
+# # Assign income only for served trips
+# total_driver_income = sum((3 + 2 * distance(r.origin, r.destination)) * 0.8 for r in served)
+# avg_net_income_per_driver = total_driver_income / len(drivers) if drivers else 0
 
-# Driver earnings per hour
-driver_hours = [(d.offline_time - d.available_time) for d in drivers.values()]
-avg_earnings_per_hour = total_driver_income / sum(driver_hours) if sum(driver_hours) > 0 else 0
+# # Driver earnings per hour
+# driver_hours = [(d.offline_time - d.available_time) for d in drivers.values()]
+# avg_earnings_per_hour = total_driver_income / sum(driver_hours) if sum(driver_hours) > 0 else 0
 
-# Fairness (income variability)
-incomes = [d.income for d in drivers.values()]
-fairness = np.std(incomes) if incomes else 0
+# # Fairness (income variability)
+# incomes = [d.income for d in drivers.values()]
+# fairness = np.std(incomes) if incomes else 0
 
-# Additional metrics
-abandonment_rate = len(abandoned) / len(riders) if riders else 0
-revenue_per_hour = total_revenue / Termination
+# # Additional metrics
+# abandonment_rate = len(abandoned) / len(riders) if riders else 0
+# revenue_per_hour = total_revenue / Termination
 
-#Results
-print("Total Riders:", len(riders))
-print("Served Riders:", len(served))
-print("Abandoned Riders:", len(abandoned))
-print(f"Rider abandonment rate: {abandonment_rate*100:.2f}%")
-print(f"Average rider waiting time: {avg_waiting_time:.2f}")
-print(f"Total revenue: £{total_revenue:.2f}")
-print(f"Average revenue per served rider: £{avg_revenue_per_rider:.2f}")
-print(f"Total driver income: £{total_driver_income:.2f}")
-print(f"Average net income per driver: £{avg_net_income_per_driver:.2f}")
-print(f"Average earnings per driver per hour: £{avg_earnings_per_hour:.2f}")
-print(f"Driver income fairness (std dev): £{fairness:.2f}")
-print(f"Revenue per hour of simulation: £{revenue_per_hour:.2f}")
+# #Results
+# print("Total Riders:", len(riders))
+# print("Served Riders:", len(served))
+# print("Abandoned Riders:", len(abandoned))
+# print(f"Rider abandonment rate: {abandonment_rate*100:.2f}%")
+# print(f"Average rider waiting time: {avg_waiting_time:.2f}")
+# print(f"Total revenue: £{total_revenue:.2f}")
+# print(f"Average revenue per served rider: £{avg_revenue_per_rider:.2f}")
+# print(f"Total driver income: £{total_driver_income:.2f}")
+# print(f"Average net income per driver: £{avg_net_income_per_driver:.2f}")
+# print(f"Average earnings per driver per hour: £{avg_earnings_per_hour:.2f}")
+# print(f"Driver income fairness (std dev): £{fairness:.2f}")
+# print(f"Revenue per hour of simulation: £{revenue_per_hour:.2f}")

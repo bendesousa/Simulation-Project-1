@@ -1,0 +1,103 @@
+#Parameters
+AVG_SPEED = 20
+Termination = 100
+Rider_arrival_rate = 30
+Driver_arrival_rate = 3
+
+#Classes
+Rider = {
+    id
+    request time
+    origin
+    destination
+    pickup_time
+    dropoff_time
+    abandonment_time
+}
+
+Driver = {
+    id
+    location
+    offline_time
+    availability
+    income
+}
+
+#System State
+TNOW = 0
+Q =0
+drivers= {}
+riders = {}
+X1, Y1=[],[]   
+X2, Y2=[],[]      
+B1, B2=[],[]   
+match=[]
+idle_drivers = []
+waiting_riders = []
+next_driver_id = 0
+next_rider_id = 0
+
+#Event calendar
+Initialise EC = [0, [], 0, [], [], [], Termination]
+
+#Simulation Loop
+while TNOW < Termination
+    if min(EC) = EC[0]
+        Create a rider with id = next_rider_id
+        Add them to the list of waiting riders
+        Add their coordinates to X1, Y1
+        Add their id to B1
+        Update EC[1] with their abandonment_time
+        Increment next_rider_id
+        Update EC[0] = TNOW + exp(30)
+        Attempt to match them with a driver 
+            If successful generate a pickup time based on distance between driver and rider
+            Add this pick up time to the list EC[3]
+            Assign the driver id to the rider id in match
+            B1[rider id] = 0
+    if min(EC) = EC[1]
+        Rider abandons the System
+        Remove their abandonment time from the list EC[1]
+        Remove them from B1
+        Remove them from the waiting riders list
+    if min(EC) = EC[2]
+        Create a driver with id = next_driver_id
+        Add them to the list of idle drivers
+        Add their coordinates to X1, Y1
+        Add their id to B2
+        Add their offline time to the list EC[5]
+        Increment next_driver_id
+        Q += 1
+        Update EC[2] = TNOW + exp(3)
+        Attempt to match them with a rider
+            If successful 
+                Generate a pickup time based on distance between driver and rider
+                Add this pick up time to the list EC[3]
+                Remove them from the list of idle drivers
+                Assign their id to the rider id in match
+                B2[driver id] = 0
+    if min(EC) = EC[3]
+        Remove the pick up event from EC[3]
+        Assign the rider's pickup time as TNOW
+        Calcuate the trip time based on distance between origin and destination
+        Add the drop off time to EC[4]    
+    if min(EC) = EC[4]
+        Remove the drop off event from EC[4]
+        Assign the rider's drop off time as TNOW
+        Calculate the driver's income based on fare - cost
+        Assign the driver's location as the rider's destination 
+        B2[driver id] = 1
+        Add the driver to the list of idle drivers
+        Attempt to match them with a rider
+            If successful 
+                Generate a pickup time based on distance between driver and rider
+                Add this pick up time to the list EC[3]
+                Remove them from the list of idle drivers
+                Assign their id to the rider id in match
+    if min(EC) = EC[5]
+        Remove the event from EC[5]
+        B2[driver id] = 0
+        Remove the driver from the idle drivers list
+    if min(EC) = EC[6]
+        Terminate the system 
+        Calculate the performance Metrics
