@@ -860,7 +860,7 @@ plt.figure()
 plt.hist(waiting_times, bins=50)
 plt.xlabel("Rider Waiting Time for Pickup")
 plt.ylabel("Number of Riders")
-plt.title("AdjustedDistribution of Rider Waiting Times")
+plt.title("Adjusted Distribution of Rider Waiting Times")
 plt.show()
 
 plt.figure()
