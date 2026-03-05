@@ -85,18 +85,6 @@ waiting_riders = []
 next_driver_id = 0
 next_rider_id = 0
 
-#Event calendar
-# EC[0] = next rider arrival
-# EC[1] = list of rider impatience times
-# EC[2] = next driver arrival
-# EC[3] = list of pickup times
-# EC[4] = list of dropoff times
-# EC[5] = list of driver offline times
-# EC[6] = termination time
-EC = [0, [], 0, [], [], [], Termination]
-EC[0] = random.expovariate(Rider_arrival_rate)
-EC[2] = random.expovariate(Driver_arrival_rate)
-
 #Times and total riders currently in the system
 system_rider_times=[]
 system_rider_counts=[]
@@ -117,6 +105,18 @@ waiting_times=[]
 
 #Times each driver was resting
 resting_times = []
+
+#Event calendar
+# EC[0] = next rider arrival
+# EC[1] = list of rider impatience times
+# EC[2] = next driver arrival
+# EC[3] = list of pickup times
+# EC[4] = list of dropoff times
+# EC[5] = list of driver offline times
+# EC[6] = termination time
+EC = [0, [], 0, [], [], [], Termination]
+EC[0] = random.expovariate(Rider_arrival_rate)
+EC[2] = random.expovariate(Driver_arrival_rate)
 
 #Simulation Loop
 while TNOW < Termination:
@@ -175,7 +175,7 @@ while TNOW < Termination:
     elif event == "abandon":
         event = min(EC[1])
         EC[1].remove(event)
-        #Assinging time and rider to event
+        #Assigning time and rider to event
         _, r_id = event
         #If pickup time is not at TNOW
         if riders[r_id].pickup_time is None:
