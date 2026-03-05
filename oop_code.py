@@ -2,6 +2,7 @@ import random
 import math
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 #Parameters
 AVG_SPEED = 20
@@ -25,12 +26,13 @@ class Driver:
     def __init__(self, d_id, time):
         self.id = d_id
         self.location = (random.uniform(0,20), random.uniform(0,20))
-        self.online_time = time
+        # self.online_time = time
+        self.arrival_time = time  
         self.offline_time = time + random.uniform(5,8)
         self.available = True
         self.income = 0
         self.busy_time = 0
-        self.busy_start = None
+        # self.busy_start = None
 
 #Helper Functions
 def distance(a, b):
@@ -51,7 +53,7 @@ def attempt_match():
         driver = min(idle_drivers, key=lambda d: distance(d.location, rider.origin))
         idle_drivers.remove(driver)
         driver.available = False
-        driver.busy_start = TNOW
+        # driver.available = TNOW
         B2[driver.id] = 0  # mark as matched
         #Travel distance to pickup
         d = distance(driver.location, rider.origin)
@@ -84,6 +86,27 @@ waiting_riders = []
 
 next_driver_id = 0
 next_rider_id = 0
+
+#Times and total riders currently in the system
+system_rider_times=[]
+system_rider_counts=[]
+current_riders=0
+
+#Times and total riders in the system who left due to impatience
+rider_abandonments_times=[]
+rider_abandonments_counts=[]
+current_abandonments=0
+
+#Times and total drivers currently in the system
+system_driver_times=[]
+system_driver_counts=[]
+current_drivers=0
+
+#Times each rider was waiting
+waiting_times=[]
+
+#Times each driver was resting
+resting_times = []
 
 #Event calendar
 # EC[0] = next rider arrival
@@ -152,13 +175,22 @@ while TNOW < Termination:
     elif event == "abandon":
         event = min(EC[1])
         EC[1].remove(event)
-        #Assinging time and rider to event
+        #Assigning time and rider to event
         _, r_id = event
         #If pickup time is not at TNOW
         if riders[r_id].pickup_time is None:
-            B1[r_id] = 0
-            #Removing abandoning rider from the waiting list
-            waiting_riders = [r for r in waiting_riders if r.id != r_id]
+            if any(r.id == r_id for r in waiting_riders):
+                B1[r_id] = 0
+                #Removing abandoning rider from the waiting list
+                waiting_riders = [r for r in waiting_riders if r.id != r_id]
+            
+                current_riders -= 1
+                system_rider_times.append(TNOW)
+                system_rider_counts.append(current_riders)
+                
+                current_abandonments += 1
+                rider_abandonments_times.append(TNOW)
+                rider_abandonments_counts.append(current_abandonments)
 
     elif event == "driver_arrival":
         #Creating the driver
@@ -178,6 +210,10 @@ while TNOW < Termination:
         EC[2] = TNOW + random.expovariate(3)
         attempt_match()
 
+        current_drivers += 1
+        system_driver_times.append(TNOW)
+        system_driver_counts.append(current_drivers)
+
     elif event == "pickup":
         event = min(EC[3])
         EC[3].remove(event)
@@ -191,6 +227,8 @@ while TNOW < Termination:
         t_dropoff = TNOW + travel_time(trip_dist)
         #Updating the event calendar
         EC[4].append((t_dropoff, r_id, d_id, trip_dist))
+
+        waiting_times.append(TNOW - r.request_time)
     
     elif event == "dropoff":
         event = min(EC[4])
@@ -200,17 +238,22 @@ while TNOW < Termination:
         r = riders[r_id]
         d = drivers[d_id]
         r.dropoff_time = TNOW
+        d.busy_time+=TNOW-r.pickup_time
         #Calculating financials
         fare = 3 + 2*dist
         cost = 0.2*dist
         d.income += (fare - cost)
         #Updating driver status and location
         d.location = r.destination
-        d.busy_time += TNOW - d.busy_start
-        d.busy_start = None
+        # d.busy_time += TNOW - d.busy_start
+        # d.busy_start = None
         B2[d_id] = 1
         idle_drivers.append(d)
         attempt_match()
+
+        current_riders -= 1
+        system_rider_times.append(TNOW)
+        system_rider_counts.append(current_riders)
 
     elif event == 'driver_offline':
         #Taking the first event in the list of driver offline times
@@ -219,8 +262,12 @@ while TNOW < Termination:
         _, d_id = event
         #Updating driver status
         B2[d_id] = 0
-        #Remving driver from idle list if they are in it
+        #Removing driver from idle list if they are in it
         idle_drivers = [drv for drv in idle_drivers if drv.id != d_id]
+
+        current_drivers -= 1
+        system_driver_times.append(TNOW)
+        system_driver_counts.append(current_drivers)
 
     elif event == "termination":
         break
@@ -265,6 +312,7 @@ avg_break_time = np.mean([
     for d in drivers.values()
 ])
 driver_satisfaction_score = avg_hourly_driver_income + (avg_hourly_driver_income * avg_break_time) - range_hourly_driver_income
+
 # Additional metrics
 abandonment_rate = len(abandoned)/len(riders) if riders else 0
 revenue_per_hour = total_revenue / Termination
@@ -286,9 +334,48 @@ print(f"Max Driver Income/hr: £{max(d.income / (d.offline_time - d.online_time)
 print(f"Min Driver Income/hr: £{min(d.income / (d.offline_time - d.online_time) for d in drivers.values())}")
 print(f"Avg Driver Break Time: {avg_break_time}")
 
+#Make plots
+plt.figure()
+plt.step(system_rider_times, system_rider_counts, where='post')
+plt.xlabel("Time")
+plt.ylabel("Number of Customers in System")
+plt.title("Customers in System Over Time")
+plt.show()
 
+plt.figure()
+plt.step(rider_abandonments_times, rider_abandonments_counts, where='post')
+plt.xlabel("Time")
+plt.ylabel("Number of Customers who abandon")
+plt.title("Abandonments from the System Over Time")
+plt.show()
 
+plt.figure()
+plt.hist(waiting_times, bins=50)
+plt.xlabel("Rider Waiting Time for Pickup")
+plt.ylabel("Number of Riders")
+plt.title("Distribution of Rider Waiting Times")
+plt.show()
 
+plt.figure()
+plt.step(system_driver_times, system_driver_counts, where='post')
+plt.xlabel("Time")
+plt.ylabel("Number of Drivers in System")
+plt.title("Drivers in System Over Time")
+plt.show()
+
+driver_incomes = [d.income for d in drivers.values()]
+plt.figure()
+plt.hist(driver_incomes, bins=len(driver_incomes))
+plt.xlabel("Driver Net Income (£)")
+plt.ylabel("Number of Drivers")
+plt.title("Number of Drivers by Income Level")
+plt.show()
+
+for d in drivers.values():
+    active_time=d.offline_time-d.arrival_time
+    rest_time=active_time-d.busy_time
+    if rest_time>=0:
+        resting_times.append(rest_time)
 
 ##########Data Driven Simulation
 # # Data Preparation
@@ -439,12 +526,13 @@ class Driver:
     def __init__(self, d_id, time):
         self.id = d_id
         self.location = (bounded_weibull(13.8762, 3.1566, -2.4330), bounded_weibull(19.2088, 4.6815, -6.0312))
-        self.online_time = time
+        # self.online_time = time
         self.offline_time = time + random.uniform(6,8)
         self.available = True
         self.income = 0
+        self.arrival_time = time
         self.busy_time = 0
-        self.busy_start = None
+        # self.busy_start = None
 
 #Helper Functions
 def distance(a, b):
@@ -465,7 +553,7 @@ def attempt_match():
         driver = min(idle_drivers, key=lambda d: distance(d.location, rider.origin))
         idle_drivers.remove(driver)
         driver.available = False
-        driver.busy_start = TNOW
+        # driver.busy_start = TNOW
         B2[driver.id] = 0  # mark as matched
         #Travel distance to pickup
         d = distance(driver.location, rider.origin)
@@ -498,6 +586,27 @@ waiting_riders = []
 
 next_driver_id = 0
 next_rider_id = 0
+
+#Times and total riders currently in the system
+system_rider_times=[]
+system_rider_counts=[]
+current_riders=0
+
+#Times and total riders in the system who left due to impatience
+rider_abandonments_times=[]
+rider_abandonments_counts=[]
+current_abandonments=0
+
+#Times and total drivers currently in the system
+system_driver_times=[]
+system_driver_counts=[]
+current_drivers=0
+
+#Times each rider was waiting
+waiting_times=[]
+
+#Times each driver was resting
+resting_times = []
 
 #Event calendar
 # EC[0] = next rider arrival
@@ -562,6 +671,10 @@ while TNOW < Termination:
         next_rider_id += 1
         EC[0] = TNOW + random.expovariate(30)
         attempt_match()
+
+        current_riders += 1
+        system_rider_times.append(TNOW)
+        system_rider_counts.append(current_riders)
     
     elif event == "abandon":
         event = min(EC[1])
@@ -569,10 +682,18 @@ while TNOW < Termination:
         #Assinging time and rider to event
         _, r_id = event
         #If pickup time is not at TNOW
-        if riders[r_id].pickup_time is None:
-            B1[r_id] = 0
-            #Removing abandoning rider from the waiting list
-            waiting_riders = [r for r in waiting_riders if r.id != r_id]
+        if any(r.id == r_id for r in waiting_riders):
+                B1[r_id] = 0
+                #Removing abandoning rider from the waiting list
+                waiting_riders = [r for r in waiting_riders if r.id != r_id]
+            
+                current_riders -= 1
+                system_rider_times.append(TNOW)
+                system_rider_counts.append(current_riders)
+                
+                current_abandonments += 1
+                rider_abandonments_times.append(TNOW)
+                rider_abandonments_counts.append(current_abandonments)
 
     elif event == "driver_arrival":
         #Creating the driver
@@ -592,6 +713,10 @@ while TNOW < Termination:
         EC[2] = TNOW + random.expovariate(3)
         attempt_match()
 
+        current_drivers += 1
+        system_driver_times.append(TNOW)
+        system_driver_counts.append(current_drivers)
+
     elif event == "pickup":
         event = min(EC[3])
         EC[3].remove(event)
@@ -605,6 +730,8 @@ while TNOW < Termination:
         t_dropoff = TNOW + travel_time(trip_dist)
         #Updating the event calendar
         EC[4].append((t_dropoff, r_id, d_id, trip_dist))
+
+        waiting_times.append(TNOW - r.request_time)
     
     elif event == "dropoff":
         event = min(EC[4])

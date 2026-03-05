@@ -13,6 +13,7 @@ Rider = {
     pickup_time
     dropoff_time
     abandonment_time
+    status #served, abandoned, pickup-scheduled, dropoff-scheduled
 }
 
 Driver = {
@@ -43,6 +44,8 @@ Initialise EC = [0, [], 0, [], [], [], Termination]
 #Simulation Loop
 while TNOW < Termination
     if min(EC) = EC[0]
+        #Rider created
+        TNOW = EC[0]
         Create a rider with id = next_rider_id
         Add them to the list of waiting riders
         Add their coordinates to X1, Y1
@@ -56,11 +59,16 @@ while TNOW < Termination
             Assign the driver id to the rider id in match
             B1[rider id] = 0
     if min(EC) = EC[1]
+        #Rider abandons
+        TNOW = EC[1]
         Rider abandons the System
         Remove their abandonment time from the list EC[1]
         Remove them from B1
         Remove them from the waiting riders list
+        Record the abandonment 
     if min(EC) = EC[2]
+        #Driver created
+        TNOW = EC[2]
         Create a driver with id = next_driver_id
         Add them to the list of idle drivers
         Add their coordinates to X1, Y1
@@ -77,11 +85,15 @@ while TNOW < Termination
                 Assign their id to the rider id in match
                 B2[driver id] = 0
     if min(EC) = EC[3]
+        #Pick up event occurs
+        TNOW = EC[3]
         Remove the pick up event from EC[3]
         Assign the rider's pickup time as TNOW
         Calcuate the trip time based on distance between origin and destination
         Add the drop off time to EC[4]    
     if min(EC) = EC[4]
+        #Drop off event occurs
+        TNOW = EC[4]
         Remove the drop off event from EC[4]
         Assign the rider's drop off time as TNOW
         Calculate the driver's income based on fare - cost
@@ -95,9 +107,13 @@ while TNOW < Termination
                 Remove them from the list of idle drivers
                 Assign their id to the rider id in match
     if min(EC) = EC[5]
+        #Driver goes offline
+        TNOW = EC[5]
         Remove the event from EC[5]
         B2[driver id] = 0
         Remove the driver from the idle drivers list
     if min(EC) = EC[6]
+        #Termination
+        TNOW = EC[6]
         Terminate the system 
         Calculate the performance Metrics

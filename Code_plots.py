@@ -262,7 +262,7 @@ while TNOW < Termination:
         _, d_id = event
         #Updating driver status
         B2[d_id] = 0
-        #Remving driver from idle list if they are in it
+        #Removing driver from idle list if they are in it
         idle_drivers = [drv for drv in idle_drivers if drv.id != d_id]
         
         current_drivers -= 1
