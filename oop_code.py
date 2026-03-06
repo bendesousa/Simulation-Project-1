@@ -970,8 +970,12 @@ plt.show()
 # avg_hourly_driver_income = np.mean([d.income / (d.offline_time - d.online_time) for d in drivers.values()])
 # range_hourly_driver_income = max(d.income / (d.offline_time - d.online_time) for d in drivers.values()) - min(d.income / (d.offline_time - d.online_time) for d in drivers.values())
 # avg_break_time = np.mean([
-#     (d.offline_time - d.online_time - d.busy_time) /
-#     (d.offline_time - d.online_time)
+#     (d.offline_time - d.online_time - d.busy_time)
+#    for d in drivers.values()
+# ])
+# avg_prop_break_time = np.mean([
+#    (d.offline_time - d.online_time - d.busy_time) /
+#    (d.offline_time - d.online_time)
 #     for d in drivers.values()
 # ])
 # driver_satisfaction_score = avg_hourly_driver_income + (avg_hourly_driver_income * avg_break_time) - range_hourly_driver_income
@@ -995,6 +999,7 @@ plt.show()
 # print(f"Max Driver Income/hr: £{max(d.income / (d.offline_time - d.online_time) for d in drivers.values())}")
 # print(f"Min Driver Income/hr: £{min(d.income / (d.offline_time - d.online_time) for d in drivers.values())}")
 # print(f"Avg Driver Break Time: {avg_break_time}")
+# print(f"Avg Proportion of Drivers being on a break: {avg_prop_break_time}")
 
 # #Make plots
 # plt.figure()
