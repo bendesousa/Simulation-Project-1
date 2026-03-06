@@ -7,11 +7,9 @@ import matplotlib.pyplot as plt
 #Parameters
 AVG_SPEED = 20
 Termination = 100
-Rider_arrival_rate = random.expovariate(30)
-Driver_arrival_rate = random.expovariate(3)
-Driver_online_time = random.uniform(5,8)
-Rider_patience_time = random.expovariate(5)
-locator = random.uniform(0,20)
+Rider_arrival_rate = 30
+Driver_arrival_rate = 3
+Rider_patience_rate = 5
 
 #########Random Simulation
 #Classes
@@ -19,19 +17,19 @@ class Rider:
     def __init__(self, r_id, time):
         self.id = r_id
         self.request_time = time
-        self.origin = (locator, locator)
-        self.destination = (locator, locator)
+        self.origin = (random.uniform(0,20), random.uniform(0,20))
+        self.destination = (random.uniform(0,20), random.uniform(0,20))
         self.pickup_time = None
         self.dropoff_time = None
-        self.patience_deadline = time + Rider_patience_time
+        self.patience_deadline = time + random.expovariate(Rider_patience_rate)
 
 class Driver:
     def __init__(self, d_id, time):
         self.id = d_id
-        self.location = (locator, locator)
+        self.location = (random.uniform(0,20), random.uniform(0,20))
         # self.online_time = time
         self.arrival_time = time  
-        self.offline_time = time + Driver_online_time
+        self.offline_time = time + random.uniform(5,8)
         self.available = True
         self.income = 0
         self.busy_time = 0
@@ -172,8 +170,12 @@ while TNOW < Termination:
         EC[1].append((r.patience_deadline, next_rider_id))
         #Updating the EC
         next_rider_id += 1
-        EC[0] = TNOW + Rider_arrival_rate
+        EC[0] = TNOW + random.expovariate(Rider_arrival_rate)
         attempt_match()
+
+        current_riders += 1
+        system_rider_times.append(TNOW)
+        system_rider_counts.append(current_riders)
     
     elif event == "abandon":
         event = min(EC[1])
@@ -210,7 +212,7 @@ while TNOW < Termination:
         next_driver_id += 1
         Q += 1
         #Updating the event calendar
-        EC[2] = TNOW + Driver_arrival_rate
+        EC[2] = TNOW + random.expovariate(Driver_arrival_rate)
         attempt_match()
 
         current_drivers += 1
@@ -306,12 +308,12 @@ rider_satisfaction_score = 100 * (1 - (total_waiting_t/total_system_t))
 # Driver financials
 total_driver_income = sum(d.income for d in drivers.values())
 avg_net_income_per_driver = total_driver_income / len(drivers) if drivers else 0
-total_driver_worktime = sum(d.offline_time - d.online_time for d in drivers.values())
-avg_hourly_driver_income = np.mean([d.income / (d.offline_time - d.online_time) for d in drivers.values()])
-range_hourly_driver_income = max(d.income / (d.offline_time - d.online_time) for d in drivers.values()) - min(d.income / (d.offline_time - d.online_time) for d in drivers.values())
+total_driver_worktime = sum(d.offline_time - d.arrival_time for d in drivers.values())
+avg_hourly_driver_income = np.mean([d.income / (d.offline_time - d.arrival_time) for d in drivers.values()])
+range_hourly_driver_income = max(d.income / (d.offline_time - d.arrival_time) for d in drivers.values()) - min(d.income / (d.offline_time - d.arrival_time) for d in drivers.values())
 avg_break_time = np.mean([
-    (d.offline_time - d.online_time - d.busy_time) /
-    (d.offline_time - d.online_time)
+    (d.offline_time - d.arrival_time - d.busy_time) /
+    (d.offline_time - d.arrival_time)
     for d in drivers.values()
 ])
 driver_satisfaction_score = avg_hourly_driver_income + (avg_hourly_driver_income * avg_break_time) - range_hourly_driver_income
@@ -333,8 +335,8 @@ print(f"Revenue per hour of simulation: £{revenue_per_hour:.2f}")
 print(f"Rider Satisfaction Score {rider_satisfaction_score:.3f}")
 print(f"Driver Satisfaction Score: {driver_satisfaction_score:.3f}")
 print(f"Avg Driver Income/hr: £{avg_hourly_driver_income}")
-print(f"Max Driver Income/hr: £{max(d.income / (d.offline_time - d.online_time) for d in drivers.values())}")
-print(f"Min Driver Income/hr: £{min(d.income / (d.offline_time - d.online_time) for d in drivers.values())}")
+print(f"Max Driver Income/hr: £{max(d.income / (d.offline_time - d.arrival_time) for d in drivers.values())}")
+print(f"Min Driver Income/hr: £{min(d.income / (d.offline_time - d.arrival_time) for d in drivers.values())}")
 print(f"Avg Driver Break Time: {avg_break_time}")
 
 #Make plots
@@ -519,8 +521,6 @@ plt.show()
 # Termination = 100
 # Rider_arrival_rate = 1/0.0289
 # Driver_arrival_rate = 1/0.2109
-# Rider_patience_time = random.expovariate(5)
-# Driver_online_time = random.uniform(5,8)
 
 # def bounded_weibull(scale, shape, loc, lb=0, ub=20):
 #     while True:
@@ -538,14 +538,14 @@ plt.show()
 #         self.destination = (bounded_weibull(18.8784, 4.3608, -5.9380), bounded_weibull(47.6629, 13.4425, -32.5667))
 #         self.pickup_time = None
 #         self.dropoff_time = None
-#         self.patience_deadline = time + Rider_patience_time
+#         self.patience_deadline = time + random.expovariate(Rider_patience_rate)
 
 # class Driver:
 #     def __init__(self, d_id, time):
 #         self.id = d_id
 #         self.location = (bounded_weibull(13.8762, 3.1566, -2.4330), bounded_weibull(19.2088, 4.6815, -6.0312))
 #         # self.online_time = time
-#         self.offline_time = time + Driver_online_time
+#         self.offline_time = time + random.uniform(5,8)
 #         self.available = True
 #         self.income = 0
 #         self.arrival_time = time
@@ -687,7 +687,7 @@ plt.show()
 #         EC[1].append((r.patience_deadline, next_rider_id))
 #         #Updating the EC
 #         next_rider_id += 1
-#         EC[0] = TNOW + random.expovariate(30)
+#         EC[0] = TNOW + random.expovariate(Rider_arrival_rate)
 #         attempt_match()
 
 #         current_riders += 1
@@ -728,7 +728,7 @@ plt.show()
 #         next_driver_id += 1
 #         Q += 1
 #         #Updating the event calendar
-#         EC[2] = TNOW + random.expovariate(3)
+#         EC[2] = TNOW + random.expovariate(Driver_arrival_rate)
 #         attempt_match()
 
 #         current_drivers += 1
