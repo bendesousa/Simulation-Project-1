@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-#Parameters
+# #Parameters
 AVG_SPEED = 20
 Termination = 100
 Rider_arrival_rate = 30
@@ -395,7 +395,7 @@ plt.title("Adjusted Distribution of Driver Resting Time")
 plt.savefig('resting_times.png')
 plt.show()
 
-##########Data Driven Simulation
+# #########Deterministic Simulation
 # # Data Preparation
 # rider_df  = pd.read_excel("riders.xlsx")
 # driver_df = pd.read_excel("drivers.xlsx")
@@ -465,52 +465,174 @@ plt.show()
 # served_statuses = ["dropoff-scheduled", "dropped-off"]
 # abandoned_statuses = ["abandoned"]
 
+# # Results
 # served = [r for r in riders.values() if str(r.status).strip().lower() in served_statuses]
 # abandoned = [r for r in riders.values() if str(r.status).strip().lower() in abandoned_statuses]
+
 # # Rider financials
 # total_revenue = 0
 # for r in served:
 #     trip_dist = distance(r.origin, r.destination)
-#     fare = 3 + 2 * trip_dist
+#     fare = 3 + 2*trip_dist
 #     total_revenue += fare
 # avg_revenue_per_rider = total_revenue / len(served) if served else 0
 
-# # Rider waiting time
-# waiting_times = [r.pickup_time - r.request_time for r in served if r.pickup_time]
-# avg_waiting_time = sum(waiting_times)/len(waiting_times) if waiting_times else 0
+# # rider time stats
+# # total_system_t = 0
+# # total_waiting_t = 0
+# # for r in riders.values():
+# #     if r.pickup_time is None:
+# #         total_system_t += r.patience_deadline - r.request_time
+# #         total_waiting_t += r.patience_deadline - r.request_time
+# #     elif r.dropoff_time is None:
+# #         total_system_t += Termination - r.request_time
+# #         total_waiting_t += r.pickup_time - r.request_time
+# #     else:
+# #         total_system_t += r.dropoff_time - r.request_time
+# #         total_waiting_t += r.pickup_time - r.request_time
+# # rider_satisfaction_score = 100 * (1 - (total_waiting_t/total_system_t))
 
 # # Driver financials
-# # Assign income only for served trips
-# total_driver_income = sum((3 + 2 * distance(r.origin, r.destination)) * 0.8 for r in served)
-# avg_net_income_per_driver = total_driver_income / len(drivers) if drivers else 0
-
-# # Driver earnings per hour
-# driver_hours = [(d.offline_time - d.available_time) for d in drivers.values()]
-# avg_earnings_per_hour = total_driver_income / sum(driver_hours) if sum(driver_hours) > 0 else 0
-
-# # Fairness (income variability)
-# incomes = [d.income for d in drivers.values()]
-# fairness = np.std(incomes) if incomes else 0
+# # total_driver_income = sum(d.income for d in drivers.values())
+# # avg_net_income_per_driver = total_driver_income / len(drivers) if drivers else 0
+# # total_driver_worktime = sum(d.offline_time - d.available_time for d in drivers.values())
+# # avg_hourly_driver_income = np.mean([d.income / (d.offline_time - d.available_time) for d in drivers.values()])
+# # range_hourly_driver_income = max(d.income / (d.offline_time - d.available_time) for d in drivers.values()) - min(d.income / (d.offline_time - d.available_time) for d in drivers.values())
+# # avg_break_time = np.mean([
+# #     (d.offline_time - d.available_time - d.busy_time) /
+# #     (d.offline_time - d.available_time)
+# #     for d in drivers.values()
+# # ])
+# # driver_satisfaction_score = avg_hourly_driver_income + (avg_hourly_driver_income * avg_break_time) - range_hourly_driver_income
 
 # # Additional metrics
-# abandonment_rate = len(abandoned) / len(riders) if riders else 0
+# abandonment_rate = len(abandoned)/len(riders) if riders else 0
 # revenue_per_hour = total_revenue / Termination
 
-# #Results
+# waiting_times = []
+# for r in riders.values():
+#     if r.status in served_statuses:
+#         waiting_times.append(r.pickup_time - r.request_time)
+        
+# rider_abandonments_times = []
+# rider_abandonments_counts = []
+# count = 0
+# for r in riders.values():
+#     if str(r.status).strip().lower() == "abandoned":
+#         count += 1
+#         rider_abandonments_times.append(r.request_time)
+#         rider_abandonments_counts.append(count)
+        
+
+# # Results
+# print("----- Data-Driven Simulation -----")
 # print("Total Riders:", len(riders))
 # print("Served Riders:", len(served))
 # print("Abandoned Riders:", len(abandoned))
 # print(f"Rider abandonment rate: {abandonment_rate*100:.2f}%")
-# print(f"Average rider waiting time: {avg_waiting_time:.2f}")
 # print(f"Total revenue: £{total_revenue:.2f}")
 # print(f"Average revenue per served rider: £{avg_revenue_per_rider:.2f}")
-# print(f"Total driver income: £{total_driver_income:.2f}")
-# print(f"Average net income per driver: £{avg_net_income_per_driver:.2f}")
-# print(f"Average earnings per driver per hour: £{avg_earnings_per_hour:.2f}")
-# print(f"Driver income fairness (std dev): £{fairness:.2f}")
+# # print(f"Total driver income: £{total_driver_income:.2f}")
+# # print(f"Average net income per driver: £{avg_net_income_per_driver:.2f}")
 # print(f"Revenue per hour of simulation: £{revenue_per_hour:.2f}")
+# # print(f"Rider Satisfaction Score {rider_satisfaction_score:.3f}")
+# # print(f"Driver Satisfaction Score: {driver_satisfaction_score:.3f}")
+# # print(f"Avg Driver Income/hr: £{avg_hourly_driver_income}")
+# # print(f"Max Driver Income/hr: £{max(d.income / (d.offline_time - d.available_time) for d in drivers.values())}")
+# # print(f"Min Driver Income/hr: £{min(d.income / (d.offline_time - d.available_time) for d in drivers.values())}")
+# #print(f"Avg Driver Break Time: {avg_break_time}")
 
+# # Plots
+# #Make plots
+# events = []    
+# for r in riders.values():
+#     events.append((r.request_time, 1))
 
+#     if str(r.status).strip().lower() == "abandoned":
+#         events.append((r.request_time, -1))
+#     elif r.dropoff_time is not None:
+#         events.append((r.dropoff_time, -1))
+#     else:
+#         events.append((Termination, 0))
+        
+# events.sort()
+
+# system_rider_times = []
+# system_rider_counts = []
+# count = 0
+# for t, change in events:
+#     count += change
+#     system_rider_times.append(t)
+#     system_rider_counts.append(count)
+# plt.figure()
+# plt.step(system_rider_times, system_rider_counts, where='post')
+# plt.xlabel("Time")
+# plt.ylabel("Number of Customers in System")
+# plt.title("Customers in System Over Time")
+# plt.savefig('deterministic_customers_in_system.png')
+# plt.show()
+
+# plt.figure()
+# plt.step(rider_abandonments_times, rider_abandonments_counts, where='post')
+# plt.xlabel("Time")
+# plt.ylabel("Number of Customers who abandon")
+# plt.title("Abandonments from the System Over Time")
+# plt.savefig('deterministic_abandonments_over_time.png')
+# plt.show()
+
+# plt.figure()
+# plt.hist(waiting_times, bins=50)
+# plt.xlabel("Rider Waiting Time for Pickup")
+# plt.ylabel("Number of Riders")
+# plt.title("Distribution of Rider Waiting Times")
+# plt.savefig('deterministic_waiting_times.png')
+# plt.show()
+
+# driver_events = []
+# for d in drivers.values():
+#     driver_events.append((d.available_time, 1))
+#     driver_events.append((d.offline_time, -1))
+
+# driver_events.sort()
+
+# system_driver_times = []
+# system_driver_counts = []
+# count = 0
+# for t, change in driver_events:
+#     count += change
+#     system_driver_times.append(t)
+#     system_driver_counts.append(count)
+# plt.figure()
+# plt.step(system_driver_times, system_driver_counts, where='post')
+# plt.xlabel("Time")
+# plt.ylabel("Number of Drivers in System")
+# plt.title("Drivers in System Over Time")
+# plt.savefig('deterministic_drivers_in_system.png')
+# plt.show()
+
+# # driver_incomes = [d.income for d in drivers.values()]
+# # plt.figure()
+# # plt.hist(driver_incomes, bins=len(driver_incomes))
+# # plt.xlabel("Driver Net Income (£)")
+# # plt.ylabel("Number of Drivers")
+# # plt.title("Number of Drivers by Income Level")
+# # plt.savefig('deterministic_driver_incomes.png')
+# # plt.show()
+
+# # resting_times = []
+# # for d in drivers.values():
+# #     active_time=d.offline_time-d.available_time
+# #     rest_time=active_time-d.busy_time
+# #     if rest_time>=0:
+# #         resting_times.append(rest_time)
+
+# # plt.figure()
+# # plt.hist(resting_times, bins=50)
+# # plt.xlabel("Driver Resting Time")
+# # plt.ylabel("Number of Drivers")
+# # plt.title("Adjusted Distribution of Driver Resting Time")
+# # plt.savefig('deterministic_resting_times.png')
+# # plt.show()
 
 
 
